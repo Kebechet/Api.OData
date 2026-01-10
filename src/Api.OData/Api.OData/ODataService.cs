@@ -1,39 +1,58 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Query;
+using Microsoft.Extensions.Options;
 using Microsoft.OData.Edm;
 
 namespace Api.OData;
 
 /// <summary>
-/// Supports OData query options for IQueryable & IEnumerable collections. Order:
-/// 1) $apply
-/// 2) $filter
-/// 3) $orderby
-/// 4) $skip
-/// 5) $top
-/// 6) $select
-/// Ignored ones: $count, $expand
+/// Supports OData query options for IQueryable and IEnumerable collections.
+/// <para>Order:</para>
+/// <list type="number">
+/// <item>$apply</item>
+/// <item>$filter</item>
+/// <item>$orderby</item>
+/// <item>$skip</item>
+/// <item>$top</item>
+/// <item>$select</item>
+/// </list>
+/// <para>$count and $expand are ignored by default (configurable via <see cref="ODataOptions"/>).</para>
 /// </summary>
-public sealed class ODataService
+public sealed class ODataService : IODataService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IEdmModel _edmModel;
-    private readonly ODataQuerySettings _oDataQuerySettings = new()
-    {
-        PageSize = null,
-        IgnoredQueryOptions = AllowedQueryOptions.Expand | AllowedQueryOptions.Count,
-        HandleNullPropagation = HandleNullPropagationOption.False
-    };
+    private readonly ODataQuerySettings _oDataQuerySettings;
 
-    public ODataService(IHttpContextAccessor httpContextAccessor, IEdmModel edmModel)
+    /// <summary>
+    /// Initializes a new instance of the ODataService.
+    /// </summary>
+    public ODataService(IHttpContextAccessor httpContextAccessor, IEdmModel edmModel, IOptions<ODataOptions> options)
     {
         _httpContextAccessor = httpContextAccessor;
         _edmModel = edmModel;
+        _oDataQuerySettings = BuildQuerySettings(options.Value);
     }
 
-    /// <summary>
-    /// Applies OData query options to the provided IQueryable collection in order: $filter, $orderby, $skip, $top, $select.
-    /// </summary>
+    private static ODataQuerySettings BuildQuerySettings(ODataOptions options)
+    {
+        var ignoredOptions = AllowedQueryOptions.None;
+
+        if (options.IgnoreExpand)
+            ignoredOptions |= AllowedQueryOptions.Expand;
+
+        if (options.IgnoreCount)
+            ignoredOptions |= AllowedQueryOptions.Count;
+
+        return new ODataQuerySettings
+        {
+            PageSize = options.PageSize,
+            IgnoredQueryOptions = ignoredOptions,
+            HandleNullPropagation = options.HandleNullPropagation
+        };
+    }
+
+    /// <inheritdoc />
     public IQueryable<T> ApplyODataQuery<T>(IQueryable<T> query)
     {
         var queryOptions = GetQueryOptions<T>();
@@ -41,9 +60,7 @@ public sealed class ODataService
         return (IQueryable<T>)queryOptions.ApplyTo(query, _oDataQuerySettings);
     }
 
-    /// <summary>
-    /// Applies OData $filter query option to the provided IQueryable collection.
-    /// </summary>
+    /// <inheritdoc />
     public IQueryable<T> ApplyODataFilter<T>(IQueryable<T> query)
     {
         var queryOptions = GetQueryOptions<T>();
@@ -55,9 +72,7 @@ public sealed class ODataService
         return (IQueryable<T>)queryOptions.Filter.ApplyTo(query, _oDataQuerySettings);
     }
 
-    /// <summary>
-    /// Applies OData $orderby query option to the provided IQueryable collection.
-    /// </summary>
+    /// <inheritdoc />
     public IQueryable<T> ApplyODataOrderBy<T>(IQueryable<T> query)
     {
         var queryOptions = GetQueryOptions<T>();
@@ -69,9 +84,7 @@ public sealed class ODataService
         return queryOptions.OrderBy.ApplyTo(query, _oDataQuerySettings);
     }
 
-    /// <summary>
-    /// Applies OData $skip and $top query options to the provided IQueryable collection.
-    /// </summary>
+    /// <inheritdoc />
     public IQueryable<T> ApplyODataPagination<T>(IQueryable<T> query)
     {
         var queryOptions = GetQueryOptions<T>();
@@ -90,9 +103,7 @@ public sealed class ODataService
         return resultQuery;
     }
 
-    /// <summary>
-    /// Applies OData $select query option to the provided IQueryable collection.
-    /// </summary>
+    /// <inheritdoc />
     public IQueryable<T> ApplyODataSelect<T>(IQueryable<T> query)
     {
         var queryOptions = GetQueryOptions<T>();
@@ -104,9 +115,7 @@ public sealed class ODataService
         return (IQueryable<T>)queryOptions.SelectExpand.ApplyTo(query, _oDataQuerySettings);
     }
 
-    /// <summary>
-    /// Applies OData $apply query option to the provided IQueryable collection.
-    /// </summary>
+    /// <inheritdoc />
     public IQueryable<T> ApplyODataApply<T>(IQueryable<T> query)
     {
         var queryOptions = GetQueryOptions<T>();

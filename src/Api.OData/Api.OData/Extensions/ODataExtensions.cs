@@ -1,9 +1,16 @@
 namespace Api.OData.Extensions;
 
+/// <summary>
+/// Extension methods for applying OData query options to IQueryable and IEnumerable collections.
+/// </summary>
 public static class ODataExtensions
 {
     // IQueryable
-    public static IQueryable<T> ApplyODataQuery<T>(this IQueryable<T> query, ODataService oDataService, bool isEnabled = true)
+
+    /// <summary>
+    /// Applies all OData query options to the provided IQueryable collection.
+    /// </summary>
+    public static IQueryable<T> ApplyODataQuery<T>(this IQueryable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         if (!isEnabled)
         {
@@ -13,7 +20,10 @@ public static class ODataExtensions
         return oDataService.ApplyODataQuery(query);
     }
 
-    public static IQueryable<T> ApplyODataFilter<T>(this IQueryable<T> query, ODataService oDataService, bool isEnabled = true)
+    /// <summary>
+    /// Applies OData $filter query option to the provided IQueryable collection.
+    /// </summary>
+    public static IQueryable<T> ApplyODataFilter<T>(this IQueryable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         if (!isEnabled)
         {
@@ -23,7 +33,10 @@ public static class ODataExtensions
         return oDataService.ApplyODataFilter(query);
     }
 
-    public static IQueryable<T> ApplyODataOrderBy<T>(this IQueryable<T> query, ODataService oDataService, bool isEnabled = true)
+    /// <summary>
+    /// Applies OData $orderby query option to the provided IQueryable collection.
+    /// </summary>
+    public static IQueryable<T> ApplyODataOrderBy<T>(this IQueryable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         if (!isEnabled)
         {
@@ -33,7 +46,10 @@ public static class ODataExtensions
         return oDataService.ApplyODataOrderBy(query);
     }
 
-    public static IQueryable<T> ApplyODataPagination<T>(this IQueryable<T> query, ODataService oDataService, bool isEnabled = true)
+    /// <summary>
+    /// Applies OData $skip and $top query options to the provided IQueryable collection.
+    /// </summary>
+    public static IQueryable<T> ApplyODataPagination<T>(this IQueryable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         if (!isEnabled)
         {
@@ -43,7 +59,10 @@ public static class ODataExtensions
         return oDataService.ApplyODataPagination(query);
     }
 
-    public static IQueryable<T> ApplyODataSelect<T>(this IQueryable<T> query, ODataService oDataService, bool isEnabled = true)
+    /// <summary>
+    /// Applies OData $select query option to the provided IQueryable collection.
+    /// </summary>
+    public static IQueryable<T> ApplyODataSelect<T>(this IQueryable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         if (!isEnabled)
         {
@@ -53,7 +72,10 @@ public static class ODataExtensions
         return oDataService.ApplyODataSelect(query);
     }
 
-    public static IQueryable<T> ApplyODataApply<T>(this IQueryable<T> query, ODataService oDataService, bool isEnabled = true)
+    /// <summary>
+    /// Applies OData $apply query option to the provided IQueryable collection.
+    /// </summary>
+    public static IQueryable<T> ApplyODataApply<T>(this IQueryable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         if (!isEnabled)
         {
@@ -64,32 +86,51 @@ public static class ODataExtensions
     }
 
     // IEnumerable
-    public static IEnumerable<T> ApplyODataQuery<T>(this IEnumerable<T> query, ODataService oDataService, bool isEnabled = true)
+
+    /// <summary>
+    /// Applies all OData query options to the provided IEnumerable collection.
+    /// </summary>
+    public static IEnumerable<T> ApplyODataQuery<T>(this IEnumerable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         return query.AsQueryable().ApplyODataQuery(oDataService, isEnabled);
     }
 
-    public static IEnumerable<T> ApplyODataFilter<T>(this IEnumerable<T> query, ODataService oDataService, bool isEnabled = true)
+    /// <summary>
+    /// Applies OData $filter query option to the provided IEnumerable collection.
+    /// </summary>
+    public static IEnumerable<T> ApplyODataFilter<T>(this IEnumerable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         return query.AsQueryable().ApplyODataFilter(oDataService, isEnabled);
     }
 
-    public static IEnumerable<T> ApplyODataOrderBy<T>(this IEnumerable<T> query, ODataService oDataService, bool isEnabled = true)
+    /// <summary>
+    /// Applies OData $orderby query option to the provided IEnumerable collection.
+    /// </summary>
+    public static IEnumerable<T> ApplyODataOrderBy<T>(this IEnumerable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         return query.AsQueryable().ApplyODataOrderBy(oDataService, isEnabled);
     }
 
-    public static IEnumerable<T> ApplyODataPagination<T>(this IEnumerable<T> query, ODataService oDataService, bool isEnabled = true)
+    /// <summary>
+    /// Applies OData $skip and $top query options to the provided IEnumerable collection.
+    /// </summary>
+    public static IEnumerable<T> ApplyODataPagination<T>(this IEnumerable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         return query.AsQueryable().ApplyODataPagination(oDataService, isEnabled);
     }
 
-    public static IEnumerable<T> ApplyODataSelect<T>(this IEnumerable<T> query, ODataService oDataService, bool isEnabled = true)
+    /// <summary>
+    /// Applies OData $select query option to the provided IEnumerable collection.
+    /// </summary>
+    public static IEnumerable<T> ApplyODataSelect<T>(this IEnumerable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         return query.AsQueryable().ApplyODataSelect(oDataService, isEnabled);
     }
 
-    public static IEnumerable<T> ApplyODataApply<T>(this IEnumerable<T> query, ODataService oDataService, bool isEnabled = true)
+    /// <summary>
+    /// Applies OData $apply query option to the provided IEnumerable collection.
+    /// </summary>
+    public static IEnumerable<T> ApplyODataApply<T>(this IEnumerable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         return query.AsQueryable().ApplyODataApply(oDataService, isEnabled);
     }

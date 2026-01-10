@@ -4,17 +4,32 @@ using Microsoft.OData.ModelBuilder;
 
 namespace Api.OData;
 
+/// <summary>
+/// Extension methods for configuring OData services in dependency injection.
+/// </summary>
 public static class ODataConfigureServices
 {
     /// <summary>
-    /// Adds OData services to the service collection with custom entity registration.
+    /// Adds OData services to the service collection with custom entity registration and default options.
     /// </summary>
     /// <param name="services">The service collection</param>
     /// <param name="registerEntities">Action to register entities in the OData model builder</param>
     public static void AddOData(this IServiceCollection services, Action<ODataConventionModelBuilder> registerEntities)
     {
-        var modelBuilder = new ODataConventionModelBuilder();
+        services.AddOData(_ => { }, registerEntities);
+    }
 
+    /// <summary>
+    /// Adds OData services to the service collection with custom options and entity registration.
+    /// </summary>
+    /// <param name="services">The service collection</param>
+    /// <param name="configureOptions">Action to configure OData options</param>
+    /// <param name="registerEntities">Action to register entities in the OData model builder</param>
+    public static void AddOData(this IServiceCollection services, Action<ODataOptions> configureOptions, Action<ODataConventionModelBuilder> registerEntities)
+    {
+        services.Configure(configureOptions);
+
+        var modelBuilder = new ODataConventionModelBuilder();
         registerEntities(modelBuilder);
 
         var edmModel = modelBuilder.GetEdmModel();
@@ -22,7 +37,7 @@ public static class ODataConfigureServices
 
         services.AddHttpContextAccessor();
 
-        services.AddScoped<ODataService>();
+        services.AddScoped<IODataService, ODataService>();
     }
 
     /// <summary>
