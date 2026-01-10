@@ -143,3 +143,8 @@ Query `?$filter=Name eq 'john'` will match "John", "JOHN", "john", etc.
 
 # License
 This repository is licensed with the [MIT](LICENSE) license.
+
+# Acknowledgments
+This work was financially supported by the European Union under project CZ.01.01.01/01/22_00-2/0000791.
+
+![Funded by the European Union](eu-funded.jpg)
