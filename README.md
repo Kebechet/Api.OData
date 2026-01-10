@@ -3,6 +3,8 @@
 # Api.OData
 [![NuGet Version](https://img.shields.io/nuget/v/Kebechet.Api.OData)](https://www.nuget.org/packages/Kebechet.Api.OData/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Kebechet.Api.OData)](https://www.nuget.org/packages/Kebechet.Api.OData/)
+[![Build](https://github.com/Kebechet/Api.OData/actions/workflows/build.yml/badge.svg)](https://github.com/Kebechet/Api.OData/actions/workflows/build.yml)
+[![codecov](https://codecov.io/gh/Kebechet/Api.OData/graph/badge.svg)](https://codecov.io/gh/Kebechet/Api.OData)
 ![Last updated](https://img.shields.io/github/last-commit/Kebechet/Api.OData/main?label=last%20updated)
 [![Twitter](https://img.shields.io/twitter/url/https/twitter.com/samuel_sidor.svg?style=social&label=Follow%20samuel_sidor)](https://x.com/samuel_sidor)
 
@@ -113,7 +115,7 @@ query.ApplyODataFilter(oDataService, isEnabled: shouldFilter);
 | `IgnoreCount` | `true` | When true, `$count` query option is ignored. |
 | `HandleNullPropagation` | `False` | How null propagation is handled during query composition. |
 | `EnableCaseInsensitiveFilter` | `false` | When true, string comparisons in `$filter` are case-insensitive. |
-| `CaseInsensitiveCollation` | `"NOCASE"` | Collation for case-insensitive comparisons. Use `"NOCASE"` for SQLite, `"Latin1_General_CI_AS"` for SQL Server. |
+| `CaseInsensitiveCollation` | `"Latin1_General_CI_AS"` | Collation for case-insensitive comparisons. Default is SQL Server. For SQLite, use `"NOCASE"`. |
 
 ### Case-Insensitive Filtering Example
 ```csharp
@@ -121,7 +123,8 @@ services.AddOData(
     options =>
     {
         options.EnableCaseInsensitiveFilter = true;
-        options.CaseInsensitiveCollation = "NOCASE"; // SQLite
+        // Default collation is "Latin1_General_CI_AS" (SQL Server)
+        // For SQLite use: options.CaseInsensitiveCollation = "NOCASE";
     },
     builder =>
     {

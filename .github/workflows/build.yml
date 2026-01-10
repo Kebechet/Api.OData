@@ -28,3 +28,17 @@ jobs:
 
     - name: Build
       run: dotnet build ${{ env.SOLUTION_PATH }} --no-restore --configuration ${{ env.BUILD_CONFIGURATION }}
+
+    - name: Test with coverage
+      run: dotnet test ${{ env.SOLUTION_PATH }} --no-build --configuration ${{ env.BUILD_CONFIGURATION }} --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+    - name: Find coverage file
+      id: coverage
+      run: echo "file=$(find ./coverage -name 'coverage.cobertura.xml' | head -1)" >> $GITHUB_OUTPUT
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        files: ${{ steps.coverage.outputs.file }}
+        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}

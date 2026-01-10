@@ -14,7 +14,10 @@ public class CaseInsensitiveFilterBinder : FilterBinder
     private readonly string _collation;
 
     private static readonly MethodInfo CollateMethod = typeof(RelationalDbFunctionsExtensions)
-        .GetMethod(nameof(RelationalDbFunctionsExtensions.Collate), [typeof(DbFunctions), typeof(string), typeof(string)])!;
+        .GetMethods()
+        .First(m => m.Name == nameof(RelationalDbFunctionsExtensions.Collate)
+            && m.IsGenericMethod
+            && m.GetParameters().Length == 3);
 
     /// <summary>
     /// Initializes a new instance of CaseInsensitiveFilterBinder with the specified collation.
@@ -40,9 +43,10 @@ public class CaseInsensitiveFilterBinder : FilterBinder
         {
             var functions = Expression.Constant(EF.Functions);
             var collation = Expression.Constant(_collation);
+            var stringCollateMethod = CollateMethod.MakeGenericMethod(typeof(string));
 
-            left = Expression.Call(CollateMethod, functions, left, collation);
-            right = Expression.Call(CollateMethod, functions, right, collation);
+            left = Expression.Call(stringCollateMethod, functions, left, collation);
+            right = Expression.Call(stringCollateMethod, functions, right, collation);
 
             return binaryOperatorNode.OperatorKind == BinaryOperatorKind.Equal
                 ? Expression.Equal(left, right)

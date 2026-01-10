@@ -35,7 +35,7 @@ public class ODataOptions
 
     /// <summary>
     /// The collation to use for case-insensitive string comparisons.
-    /// Default is "NOCASE" (SQLite). For SQL Server, use e.g., "Latin1_General_CI_AS".
+    /// Default is "Latin1_General_CI_AS" (SQL Server). For SQLite, use "NOCASE".
     /// </summary>
-    public string CaseInsensitiveCollation { get; set; } = "NOCASE";
+    public string CaseInsensitiveCollation { get; set; } = "Latin1_General_CI_AS";
 }
