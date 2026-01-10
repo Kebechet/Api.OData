@@ -12,6 +12,7 @@ A lightweight library for applying OData query options (`$filter`, `$orderby`, `
 - Apply OData query options from HTTP request to any collection
 - Fluent extension methods for IQueryable and IEnumerable
 - Configurable options (page size, ignored query options, null propagation)
+- Case-insensitive `$filter` support (configurable collation)
 - `IODataService` interface for easy mocking/testing
 - Generic `RegisterEntitiesFromAssemblies<TMarker>()` - use your own marker interface
 - Full XML documentation for IntelliSense support
@@ -111,6 +112,23 @@ query.ApplyODataFilter(oDataService, isEnabled: shouldFilter);
 | `IgnoreExpand` | `true` | When true, `$expand` query option is ignored. |
 | `IgnoreCount` | `true` | When true, `$count` query option is ignored. |
 | `HandleNullPropagation` | `False` | How null propagation is handled during query composition. |
+| `EnableCaseInsensitiveFilter` | `false` | When true, string comparisons in `$filter` are case-insensitive. |
+| `CaseInsensitiveCollation` | `"NOCASE"` | Collation for case-insensitive comparisons. Use `"NOCASE"` for SQLite, `"Latin1_General_CI_AS"` for SQL Server. |
+
+### Case-Insensitive Filtering Example
+```csharp
+services.AddOData(
+    options =>
+    {
+        options.EnableCaseInsensitiveFilter = true;
+        options.CaseInsensitiveCollation = "NOCASE"; // SQLite
+    },
+    builder =>
+    {
+        builder.RegisterEntitiesFromAssemblies<IEntity>(typeof(MyEntity).Assembly);
+    });
+```
+Query `?$filter=Name eq 'john'` will match "John", "JOHN", "john", etc.
 
 ## Query Processing Order
 1. `$apply`

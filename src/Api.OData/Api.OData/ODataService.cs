@@ -1,5 +1,7 @@
+using System.Linq.Expressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Query;
+using Microsoft.AspNetCore.OData.Query.Expressions;
 using Microsoft.Extensions.Options;
 using Microsoft.OData.Edm;
 
@@ -23,6 +25,7 @@ public sealed class ODataService : IODataService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IEdmModel _edmModel;
     private readonly ODataQuerySettings _oDataQuerySettings;
+    private readonly ODataOptions _options;
 
     /// <summary>
     /// Initializes a new instance of the ODataService.
@@ -31,7 +34,8 @@ public sealed class ODataService : IODataService
     {
         _httpContextAccessor = httpContextAccessor;
         _edmModel = edmModel;
-        _oDataQuerySettings = BuildQuerySettings(options.Value);
+        _options = options.Value;
+        _oDataQuerySettings = BuildQuerySettings(_options);
     }
 
     private static ODataQuerySettings BuildQuerySettings(ODataOptions options)
@@ -67,6 +71,14 @@ public sealed class ODataService : IODataService
         if (queryOptions.Filter is null)
         {
             return query;
+        }
+
+        if (_options.EnableCaseInsensitiveFilter)
+        {
+            var filterBinder = new CaseInsensitiveFilterBinder(_options.CaseInsensitiveCollation);
+            var context = new QueryBinderContext(_edmModel, _oDataQuerySettings, typeof(T));
+            var filterExpression = filterBinder.BindFilter(queryOptions.Filter.FilterClause, context);
+            return query.Where((Expression<Func<T, bool>>)filterExpression);
         }
 
         return (IQueryable<T>)queryOptions.Filter.ApplyTo(query, _oDataQuerySettings);
