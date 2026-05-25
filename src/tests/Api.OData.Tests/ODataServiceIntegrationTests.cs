@@ -201,13 +201,138 @@ public class ODataServiceIntegrationTests
         var service = CreateService("?$filter=Category eq 'Fruit'&$orderby=Price desc&$top=2");
         var query = GetTestProducts();
 
-        // Act
-        var result = service.ApplyODataQuery(query).ToList();
+        // Act — without $select the element type at runtime is still TestProduct.
+        var result = service.ApplyODataQuery(query).Cast<TestProduct>().ToList();
 
         // Assert
         result.Should().HaveCount(2);
         result.Should().OnlyContain(p => p.Category == "Fruit");
         result.Select(p => p.Price).Should().BeInDescendingOrder();
+    }
+
+    [Fact]
+    public void ApplyODataSelect_WithSelectClause_ProjectsAndDoesNotThrow()
+    {
+        // Arrange
+        var service = CreateService("?$select=Id,Name");
+        var query = GetTestProducts();
+
+        // Act
+        var result = service.ApplyODataSelect(query);
+
+        // Assert
+        // $select projects into OData wrapper types whose element type is no longer T,
+        // so we enumerate via the non-generic IQueryable contract.
+        var items = new List<object>();
+        foreach (var item in result)
+        {
+            items.Add(item);
+        }
+        items.Should().HaveCount(5);
+        items.Should().OnlyContain(item => item != null);
+        // The wrapper element type must NOT be the original entity type.
+        items.First().Should().NotBeOfType<TestProduct>();
+    }
+
+    [Fact]
+    public void ApplyODataSelect_WithoutSelectClause_ReturnsOriginalQuery()
+    {
+        // Arrange
+        var service = CreateService("");
+        var query = GetTestProducts();
+
+        // Act
+        var result = service.ApplyODataSelect(query);
+
+        // Assert
+        result.Should().BeSameAs(query);
+    }
+
+    [Fact]
+    public void ApplyODataQuery_WithSelectClause_AppliesAllAndDoesNotThrow()
+    {
+        // Arrange — covers the regression where ApplyODataQuery cast back to
+        // IQueryable<T> after $select wrapped the projection.
+        var service = CreateService("?$filter=Category eq 'Fruit'&$orderby=Price desc&$top=2&$select=Id,Name");
+        var query = GetTestProducts();
+
+        // Act
+        var result = service.ApplyODataQuery(query);
+
+        // Assert
+        var items = new List<object>();
+        foreach (var item in result)
+        {
+            items.Add(item);
+        }
+        items.Should().HaveCount(2);
+        items.Should().OnlyContain(item => item != null);
+    }
+
+    [Fact]
+    public void ApplyODataQuery_WithoutSelectClause_PreservesElementType()
+    {
+        // Arrange
+        var service = CreateService("?$filter=Category eq 'Fruit'");
+        var query = GetTestProducts();
+
+        // Act
+        var result = service.ApplyODataQuery(query);
+
+        // Assert — without $select the element type at runtime is still TestProduct,
+        // so callers can safely cast back to IQueryable<TestProduct>.
+        var typed = result.Cast<TestProduct>().ToList();
+        typed.Should().HaveCount(3);
+        typed.Should().OnlyContain(p => p.Category == "Fruit");
+    }
+
+    [Fact]
+    public void ApplyODataQueryWithoutSelect_WithMultipleOptions_AppliesAllExceptSelect()
+    {
+        // Arrange
+        var service = CreateService("?$filter=Category eq 'Fruit'&$orderby=Price desc&$top=2");
+        var query = GetTestProducts();
+
+        // Act
+        var result = service.ApplyODataQueryWithoutSelect(query).ToList();
+
+        // Assert — strongly typed, no cast needed.
+        result.Should().HaveCount(2);
+        result.Should().OnlyContain(p => p.Category == "Fruit");
+        result.Select(p => p.Price).Should().BeInDescendingOrder();
+    }
+
+    [Fact]
+    public void ApplyODataQueryWithoutSelect_WithSelectClause_IgnoresSelectAndKeepsElementType()
+    {
+        // Arrange — client sends $select alongside other operations.
+        var service = CreateService("?$filter=Category eq 'Fruit'&$select=Id,Name");
+        var query = GetTestProducts();
+
+        // Act
+        var result = service.ApplyODataQueryWithoutSelect(query).ToList();
+
+        // Assert — $select is silently ignored, the result is IQueryable<TestProduct>,
+        // and every TestProduct field is hydrated (not just Id/Name).
+        result.Should().HaveCount(3);
+        result.Should().OnlyContain(p => p.Category == "Fruit");
+        result.Should().AllBeOfType<TestProduct>();
+        result.Should().OnlyContain(p => p.Price > 0m); // Price wasn't in $select but is still populated.
+    }
+
+    [Fact]
+    public void ApplyODataQueryWithoutSelect_OnEmptyRequest_ReturnsAllItemsTyped()
+    {
+        // Arrange
+        var service = CreateService("");
+        var query = GetTestProducts();
+
+        // Act
+        var result = service.ApplyODataQueryWithoutSelect(query).ToList();
+
+        // Assert
+        result.Should().HaveCount(5);
+        result.Should().AllBeOfType<TestProduct>();
     }
 
     [Fact]

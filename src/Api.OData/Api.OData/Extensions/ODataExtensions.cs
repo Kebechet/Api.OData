@@ -1,3 +1,5 @@
+using System.Collections;
+
 namespace Api.OData.Extensions;
 
 /// <summary>
@@ -10,7 +12,14 @@ public static class ODataExtensions
     /// <summary>
     /// Applies all OData query options to the provided IQueryable collection.
     /// </summary>
-    public static IQueryable<T> ApplyODataQuery<T>(this IQueryable<T> query, IODataService oDataService, bool isEnabled = true)
+    /// <remarks>
+    /// Returns non-generic <see cref="IQueryable"/> because <c>$select</c> reshapes the element
+    /// type into OData wrapper types. When no <c>$select</c> is present the element type at
+    /// runtime is still <typeparamref name="T"/>. Use
+    /// <see cref="ApplyODataQueryWithoutSelect{T}(IQueryable{T}, IODataService, bool)"/>
+    /// when the endpoint does not expose <c>$select</c>.
+    /// </remarks>
+    public static IQueryable ApplyODataQuery<T>(this IQueryable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         if (!isEnabled)
         {
@@ -18,6 +27,21 @@ public static class ODataExtensions
         }
 
         return oDataService.ApplyODataQuery(query);
+    }
+
+    /// <summary>
+    /// Applies <c>$apply</c>, <c>$filter</c>, <c>$orderby</c>, <c>$skip</c>, and <c>$top</c> to the
+    /// provided IQueryable collection. <c>$select</c> in the request URL is silently ignored, so the
+    /// element type is preserved as <typeparamref name="T"/>.
+    /// </summary>
+    public static IQueryable<T> ApplyODataQueryWithoutSelect<T>(this IQueryable<T> query, IODataService oDataService, bool isEnabled = true)
+    {
+        if (!isEnabled)
+        {
+            return query;
+        }
+
+        return oDataService.ApplyODataQueryWithoutSelect(query);
     }
 
     /// <summary>
@@ -62,7 +86,11 @@ public static class ODataExtensions
     /// <summary>
     /// Applies OData $select query option to the provided IQueryable collection.
     /// </summary>
-    public static IQueryable<T> ApplyODataSelect<T>(this IQueryable<T> query, IODataService oDataService, bool isEnabled = true)
+    /// <remarks>
+    /// Returns non-generic <see cref="IQueryable"/> because <c>$select</c> projects into OData
+    /// wrapper types whose element type is no longer <typeparamref name="T"/>.
+    /// </remarks>
+    public static IQueryable ApplyODataSelect<T>(this IQueryable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         if (!isEnabled)
         {
@@ -90,9 +118,26 @@ public static class ODataExtensions
     /// <summary>
     /// Applies all OData query options to the provided IEnumerable collection.
     /// </summary>
-    public static IEnumerable<T> ApplyODataQuery<T>(this IEnumerable<T> query, IODataService oDataService, bool isEnabled = true)
+    /// <remarks>
+    /// Returns non-generic <see cref="IEnumerable"/> because <c>$select</c> reshapes the element
+    /// type into OData wrapper types. When no <c>$select</c> is present the element type at
+    /// runtime is still <typeparamref name="T"/>. Use
+    /// <see cref="ApplyODataQueryWithoutSelect{T}(IEnumerable{T}, IODataService, bool)"/>
+    /// when the endpoint does not expose <c>$select</c>.
+    /// </remarks>
+    public static IEnumerable ApplyODataQuery<T>(this IEnumerable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         return query.AsQueryable().ApplyODataQuery(oDataService, isEnabled);
+    }
+
+    /// <summary>
+    /// Applies <c>$apply</c>, <c>$filter</c>, <c>$orderby</c>, <c>$skip</c>, and <c>$top</c> to the
+    /// provided IEnumerable collection. <c>$select</c> in the request URL is silently ignored, so the
+    /// element type is preserved as <typeparamref name="T"/>.
+    /// </summary>
+    public static IEnumerable<T> ApplyODataQueryWithoutSelect<T>(this IEnumerable<T> query, IODataService oDataService, bool isEnabled = true)
+    {
+        return query.AsQueryable().ApplyODataQueryWithoutSelect(oDataService, isEnabled);
     }
 
     /// <summary>
@@ -122,7 +167,11 @@ public static class ODataExtensions
     /// <summary>
     /// Applies OData $select query option to the provided IEnumerable collection.
     /// </summary>
-    public static IEnumerable<T> ApplyODataSelect<T>(this IEnumerable<T> query, IODataService oDataService, bool isEnabled = true)
+    /// <remarks>
+    /// Returns non-generic <see cref="IEnumerable"/> because <c>$select</c> projects into OData
+    /// wrapper types whose element type is no longer <typeparamref name="T"/>.
+    /// </remarks>
+    public static IEnumerable ApplyODataSelect<T>(this IEnumerable<T> query, IODataService oDataService, bool isEnabled = true)
     {
         return query.AsQueryable().ApplyODataSelect(oDataService, isEnabled);
     }
