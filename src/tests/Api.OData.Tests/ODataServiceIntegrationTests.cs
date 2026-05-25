@@ -287,14 +287,14 @@ public class ODataServiceIntegrationTests
     }
 
     [Fact]
-    public void ApplyODataQueryWithoutSelect_WithMultipleOptions_AppliesAllExceptSelect()
+    public void ApplyODataQueryWithoutProjection_WithMultipleOptions_AppliesAllExceptProjection()
     {
         // Arrange
         var service = CreateService("?$filter=Category eq 'Fruit'&$orderby=Price desc&$top=2");
         var query = GetTestProducts();
 
         // Act
-        var result = service.ApplyODataQueryWithoutSelect(query).ToList();
+        var result = service.ApplyODataQueryWithoutProjection(query).ToList();
 
         // Assert — strongly typed, no cast needed.
         result.Should().HaveCount(2);
@@ -303,14 +303,14 @@ public class ODataServiceIntegrationTests
     }
 
     [Fact]
-    public void ApplyODataQueryWithoutSelect_WithSelectClause_IgnoresSelectAndKeepsElementType()
+    public void ApplyODataQueryWithoutProjection_WithSelectClause_IgnoresSelectAndKeepsElementType()
     {
         // Arrange — client sends $select alongside other operations.
         var service = CreateService("?$filter=Category eq 'Fruit'&$select=Id,Name");
         var query = GetTestProducts();
 
         // Act
-        var result = service.ApplyODataQueryWithoutSelect(query).ToList();
+        var result = service.ApplyODataQueryWithoutProjection(query).ToList();
 
         // Assert — $select is silently ignored, the result is IQueryable<TestProduct>,
         // and every TestProduct field is hydrated (not just Id/Name).
@@ -321,18 +321,73 @@ public class ODataServiceIntegrationTests
     }
 
     [Fact]
-    public void ApplyODataQueryWithoutSelect_OnEmptyRequest_ReturnsAllItemsTyped()
+    public void ApplyODataQueryWithoutProjection_WithApplyClause_IgnoresApplyAndKeepsElementType()
+    {
+        // Arrange — client sends $apply (aggregation) alongside other operations. Without
+        // ignoring $apply the result would be IQueryable<DynamicTypeWrapper> and the typed
+        // cast inside the method would throw InvalidCastException.
+        var service = CreateService("?$filter=Category eq 'Fruit'&$apply=groupby((Category),aggregate(Price with sum as TotalPrice))");
+        var query = GetTestProducts();
+
+        // Act
+        var result = service.ApplyODataQueryWithoutProjection(query).ToList();
+
+        // Assert — $apply is silently ignored, the result is IQueryable<TestProduct>,
+        // and rows are not aggregated.
+        result.Should().HaveCount(3);
+        result.Should().AllBeOfType<TestProduct>();
+        result.Should().OnlyContain(p => p.Category == "Fruit");
+    }
+
+    [Fact]
+    public void ApplyODataQueryWithoutProjection_OnEmptyRequest_ReturnsAllItemsTyped()
     {
         // Arrange
         var service = CreateService("");
         var query = GetTestProducts();
 
         // Act
-        var result = service.ApplyODataQueryWithoutSelect(query).ToList();
+        var result = service.ApplyODataQueryWithoutProjection(query).ToList();
 
         // Assert
         result.Should().HaveCount(5);
         result.Should().AllBeOfType<TestProduct>();
+    }
+
+    [Fact]
+    public void ApplyODataApply_WithAggregation_ProjectsAndDoesNotThrow()
+    {
+        // Arrange — $apply aggregations produce DynamicTypeWrapper rows, so the
+        // result element type is no longer TestProduct.
+        var service = CreateService("?$apply=groupby((Category),aggregate(Price with sum as TotalPrice))");
+        var query = GetTestProducts();
+
+        // Act
+        var result = service.ApplyODataApply(query);
+
+        // Assert
+        var items = new List<object>();
+        foreach (var item in result)
+        {
+            items.Add(item);
+        }
+        items.Should().HaveCount(2); // Fruit, Vegetable
+        items.Should().OnlyContain(item => item != null);
+        items.First().Should().NotBeOfType<TestProduct>();
+    }
+
+    [Fact]
+    public void ApplyODataApply_WithoutApplyClause_ReturnsOriginalQuery()
+    {
+        // Arrange
+        var service = CreateService("");
+        var query = GetTestProducts();
+
+        // Act
+        var result = service.ApplyODataApply(query);
+
+        // Assert
+        result.Should().BeSameAs(query);
     }
 
     [Fact]

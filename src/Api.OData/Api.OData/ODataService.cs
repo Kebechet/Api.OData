@@ -65,17 +65,19 @@ public sealed class ODataService : IODataService
     }
 
     /// <inheritdoc />
-    public IQueryable<T> ApplyODataQueryWithoutSelect<T>(IQueryable<T> query)
+    public IQueryable<T> ApplyODataQueryWithoutProjection<T>(IQueryable<T> query)
     {
         var queryOptions = GetQueryOptions<T>();
-        var settingsWithoutSelect = new ODataQuerySettings
+        var settingsWithoutProjection = new ODataQuerySettings
         {
             PageSize = _oDataQuerySettings.PageSize,
-            IgnoredQueryOptions = _oDataQuerySettings.IgnoredQueryOptions | AllowedQueryOptions.Select,
+            IgnoredQueryOptions = _oDataQuerySettings.IgnoredQueryOptions
+                | AllowedQueryOptions.Select
+                | AllowedQueryOptions.Apply,
             HandleNullPropagation = _oDataQuerySettings.HandleNullPropagation,
         };
 
-        return (IQueryable<T>)queryOptions.ApplyTo(query, settingsWithoutSelect);
+        return (IQueryable<T>)queryOptions.ApplyTo(query, settingsWithoutProjection);
     }
 
     /// <inheritdoc />
@@ -142,7 +144,7 @@ public sealed class ODataService : IODataService
     }
 
     /// <inheritdoc />
-    public IQueryable<T> ApplyODataApply<T>(IQueryable<T> query)
+    public IQueryable ApplyODataApply<T>(IQueryable<T> query)
     {
         var queryOptions = GetQueryOptions<T>();
         if (queryOptions.Apply is null)
@@ -150,7 +152,7 @@ public sealed class ODataService : IODataService
             return query;
         }
 
-        return (IQueryable<T>)queryOptions.Apply.ApplyTo(query, _oDataQuerySettings);
+        return queryOptions.Apply.ApplyTo(query, _oDataQuerySettings);
     }
 
     private ODataQueryOptions<T> GetQueryOptions<T>()
