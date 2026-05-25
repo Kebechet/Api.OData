@@ -57,11 +57,27 @@ public sealed class ODataService : IODataService
     }
 
     /// <inheritdoc />
-    public IQueryable<T> ApplyODataQuery<T>(IQueryable<T> query)
+    public IQueryable ApplyODataQuery<T>(IQueryable<T> query)
     {
         var queryOptions = GetQueryOptions<T>();
 
-        return (IQueryable<T>)queryOptions.ApplyTo(query, _oDataQuerySettings);
+        return (IQueryable)queryOptions.ApplyTo(query, _oDataQuerySettings);
+    }
+
+    /// <inheritdoc />
+    public IQueryable<T> ApplyODataQueryWithoutProjection<T>(IQueryable<T> query)
+    {
+        var queryOptions = GetQueryOptions<T>();
+        var settingsWithoutProjection = new ODataQuerySettings
+        {
+            PageSize = _oDataQuerySettings.PageSize,
+            IgnoredQueryOptions = _oDataQuerySettings.IgnoredQueryOptions
+                | AllowedQueryOptions.Select
+                | AllowedQueryOptions.Apply,
+            HandleNullPropagation = _oDataQuerySettings.HandleNullPropagation,
+        };
+
+        return (IQueryable<T>)queryOptions.ApplyTo(query, settingsWithoutProjection);
     }
 
     /// <inheritdoc />
@@ -116,7 +132,7 @@ public sealed class ODataService : IODataService
     }
 
     /// <inheritdoc />
-    public IQueryable<T> ApplyODataSelect<T>(IQueryable<T> query)
+    public IQueryable ApplyODataSelect<T>(IQueryable<T> query)
     {
         var queryOptions = GetQueryOptions<T>();
         if (queryOptions.SelectExpand is null)
@@ -124,11 +140,11 @@ public sealed class ODataService : IODataService
             return query;
         }
 
-        return (IQueryable<T>)queryOptions.SelectExpand.ApplyTo(query, _oDataQuerySettings);
+        return queryOptions.SelectExpand.ApplyTo(query, _oDataQuerySettings);
     }
 
     /// <inheritdoc />
-    public IQueryable<T> ApplyODataApply<T>(IQueryable<T> query)
+    public IQueryable ApplyODataApply<T>(IQueryable<T> query)
     {
         var queryOptions = GetQueryOptions<T>();
         if (queryOptions.Apply is null)
@@ -136,7 +152,7 @@ public sealed class ODataService : IODataService
             return query;
         }
 
-        return (IQueryable<T>)queryOptions.Apply.ApplyTo(query, _oDataQuerySettings);
+        return queryOptions.Apply.ApplyTo(query, _oDataQuerySettings);
     }
 
     private ODataQueryOptions<T> GetQueryOptions<T>()
